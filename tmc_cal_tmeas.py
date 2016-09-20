@@ -6,25 +6,13 @@ import datetime
 if __name__ == '__main__':
 
     ser = serial.Serial()
-    filename = 'hp34401a_' + datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S:%f') + '.txt'
+    filename = 'tmeas_' + datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S:%f') + '.txt'
     f = open(filename,'w')
     
     try:
         success = True
-        ser = serial.Serial( '/dev/ttyUSB1', 9600, timeout=0.5 )
+        ser = serial.Serial( '/dev/ttyUSB0', 115200, timeout=0.5 )
         
-        cmd = '++mode 1'
-        print 'Sending:', cmd        
-        ser.write(cmd + '\n')
-
-        cmd = '++auto 1'
-        print 'Sending:', cmd        
-        ser.write(cmd + '\n')
-        
-        cmd = '++mode 0'
-        print 'Sending:', cmd        
-        ser.write(cmd + '\n')
-
         while(1):
             s = ser.readline();
             if len(s) > 0:
