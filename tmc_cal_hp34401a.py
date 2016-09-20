@@ -12,9 +12,19 @@ if __name__ == '__main__':
     try:
         success = True
         ser = serial.Serial( '/dev/ttyUSB0', 9600, timeout=0.5 )
+        
+        cmd = '++mode 1'
+        print 'Sending:', cmd        
+        ser.write(cmd + '\n')
+
+        cmd = '++auto 1'
+        print 'Sending:', cmd        
+        ser.write(cmd + '\n')
+        
         cmd = '++mode 0'
         print 'Sending:', cmd        
         ser.write(cmd + '\n')
+
         while(1):
             s = ser.readline();
             if len(s) > 0:
