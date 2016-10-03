@@ -127,7 +127,7 @@ import tmc_parse_data
 import dmm_interp
 def main():
     # Get the sensor data
-    sensor_time,sensor_meas = tmc_parse_data.tmc_parse_data('tmeas_2016-09-20_13_15_40_177697.txt','TSIG0','ADC0')
+    sensor_time,sensor_meas = tmc_parse_data.tmc_parse_data('../tmc_cal_data/tmeas_2016-09-20_13_15_40_177697.txt','TSIG0','ADC0')
     plt.plot(sensor_time,sensor_meas)
     plt.show()
 
@@ -138,7 +138,7 @@ def main():
     plt.show()
 
     # Get the DMM data
-    dmm_meas_2 = dmm_interp.dmm_interp('hp34401a_2016-09-20_13_15_05_748130.txt',sensor_time_2)
+    dmm_meas_2 = dmm_interp.dmm_interp('../tmc_cal_data/hp34401a_2016-09-20_13_15_05_748130.txt',sensor_time_2)
     plt.plot(sensor_time_2,dmm_meas_2)
     plt.show()
     
