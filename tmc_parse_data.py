@@ -44,13 +44,13 @@ def tmc_parse_data(filename,row_str,col_str):
     return sensor_time,sensor_meas
 
 
-def tmc_find_valid_meas(sensor_time,sensor_meas,lim=6.E6):
+def tmc_find_valid_meas(sensor_time,sensor_meas,lim=6.E6,mid=9.45866E6):
     # Find time where we are within +/- 100 counts of the mean
     # sensor_mean = np.mean(sensor_meas)
     # upper_lim = sensor_mean + lim
     # lower_lim = sensor_mean - lim
-    upper_lim = 9.45866E6 + lim
-    lower_lim = 9.45866E6 - lim
+    upper_lim = mid + lim
+    lower_lim = mid - lim
     sensor_time_2 = []
     sensor_meas_2 = []
     for i in range(len(sensor_meas)):
