@@ -37,8 +37,9 @@ def tmc_parse_data(filename,row_str,col_str):
                 tstamp = time.mktime(datetime.datetime.strptime(strtime,'%Y-%m-%d_%H:%M:%S:%f').timetuple())
                 sensor_meas_single = float(line.split()[col_str_to_idx[col_str]])
                 sensor_time.append(tstamp)
-                sensor_meas.append(float(line.split()[2]))
-
+                # sensor_meas.append(float(line.split()[2]))
+                sensor_meas.append(sensor_meas_single)
+                
     f.close()
 
     return sensor_time,sensor_meas
