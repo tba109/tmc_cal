@@ -187,6 +187,17 @@ def main():
     plt.plot(tsig_dates,tsig_pure_mk_2)
     plt.show()
 
+    # Look at baseline versus temperature
+    sensor_time_2 = sensor_time[1:-1]
+    bsln_volts_2 = bsln_interp[1:-1]
+    btemp_interp = meas_interp.meas_interp(btemp_time,btemp_degc,sensor_time_2)
+    plt.plot(btemp_interp,bsln_volts_2,'.')
+    A,B = curve_fit(f_line,btemp_interp,bsln_volts_2)[0]
+    print "BSLN correlation to temperature: %f uV/degC, %f uV" % (A*1.E6,B*1.E6)
+    plt.show()
+
+    
+
 if __name__ == "__main__":
     main()
     
