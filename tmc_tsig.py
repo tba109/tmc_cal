@@ -157,6 +157,11 @@ def main():
     bsln_dates = [datetime.datetime.fromtimestamp(ts) for ts in bsln_time]
     bsln_volts = [(x/8388608.-1)*0.625*2 for x in bsln_meas]
 
+    # ZERO
+    zero_time,zero_meas = tmc_parse_data.tmc_parse_data(tmc_file,'ZERO','ADC'+adc)
+    zero_dates = [datetime.datetime.fromtimestamp(ts) for ts in zero_time]
+    zero_volts = [(x/8388608.-1)*0.625*2 for x in zero_meas]
+
     # Plot up the DMM corrected data
     plot_all(tsig_dates,tsig_volts,
              curr_dates,curr_ma_2,
@@ -204,6 +209,17 @@ def main():
     plt.plot(btemp_interp,bsln_volts_2,'.')
     A,B = curve_fit(f_line,btemp_interp,bsln_volts_2)[0]
     print "BSLN correlation to temperature: %f uV/degC, %f uV" % (A*1.E6,B*1.E6)
+    plt.show()
+
+
+    # Look at the zero point
+    ax1 = plt.subplot(111)
+    zero_mean = np.mean(zero_volts)
+    zero_volts_2 = [x-zero_mean for x in zero_volts]
+    plt.ylabel('ZERO Excess (Volts)')
+    plt.setp(ax1.get_xticklabels(), fontsize=8)
+    plt.xticks(rotation=25)
+    plt.plot(zero_dates,zero_volts_2)
     plt.show()
 
     
