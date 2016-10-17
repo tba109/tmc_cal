@@ -202,13 +202,23 @@ def main():
     plt.plot(bsln_dates,bsln_volts_2)
     plt.show()
 
-    # Look at baseline versus temperature
+    # Look at baseline versus boardtemperature
     sensor_time_2 = sensor_time[1:-1]
     bsln_volts_2 = bsln_interp[1:-1]
     btemp_interp = meas_interp.meas_interp(btemp_time,btemp_degc,sensor_time_2)
     plt.plot(btemp_interp,bsln_volts_2,'.')
     A,B = curve_fit(f_line,btemp_interp,bsln_volts_2)[0]
-    print "BSLN correlation to temperature: %f uV/degC, %f uV" % (A*1.E6,B*1.E6)
+    print "BSLN correlation to board temperature: %f uV/degC, %f uV" % (A*1.E6,B*1.E6)
+    plt.show()
+
+    
+    # Look at baseline versus adc temperature
+    sensor_time_2 = sensor_time[1:-1]
+    bsln_volts_2 = bsln_interp[1:-1]
+    atemp_interp = meas_interp.meas_interp(atemp_time,atemp_degc,sensor_time_2)
+    plt.plot(atemp_interp,bsln_volts_2,'.')
+    A,B = curve_fit(f_line,atemp_interp,bsln_volts_2)[0]
+    print "BSLN correlation to ADC temperature: %f uV/degC, %f uV" % (A*1.E6,B*1.E6)
     plt.show()
 
 
