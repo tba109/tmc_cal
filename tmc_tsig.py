@@ -116,8 +116,8 @@ import tmc_parse_data
 import dmm_interp
 def main():
 
-    chan = '5'
-    adc = '11'
+    chan = '3'
+    adc = '9'
     
     # October 10, 2016 (the shorted board 3 run (ADC 9, 10, and 11)
     # tmc_file = '../tmc_cal_data/tmeas_2016-10-07_18_54_15_041531.txt'
@@ -174,6 +174,17 @@ def main():
     print 'ADC %d, CHAN %d: standard deviation is %f uV' % (int(adc),int(chan),np.std(tsig_pure*1.E6))
 
     plt.plot(bsln_interp,tsig_volts,'.')
+    plt.show()
+
+    # Do it in rough temperature units
+    ax1 = plt.subplot(111)
+    tsig_pure_mk = [x*1.E6/-2.5 for x in tsig_pure]
+    tsig_pure_mk_mean = np.mean(tsig_pure_mk)
+    tsig_pure_mk_2 = [x-tsig_pure_mk_mean for x in tsig_pure_mk]
+    plt.ylabel('TSIG Excess (mK)')
+    plt.setp(ax1.get_xticklabels(), fontsize=8)
+    plt.xticks(rotation=25)
+    plt.plot(tsig_dates,tsig_pure_mk_2)
     plt.show()
 
 if __name__ == "__main__":
