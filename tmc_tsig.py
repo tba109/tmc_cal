@@ -187,6 +187,16 @@ def main():
     plt.plot(tsig_dates,tsig_pure_mk_2)
     plt.show()
 
+    # Look at baseline versus time
+    ax1 = plt.subplot(111)
+    bsln_mean = np.mean(bsln_volts)
+    bsln_volts_2 = [x-bsln_mean for x in bsln_volts]
+    plt.ylabel('BSLN Excess (Volts)')
+    plt.setp(ax1.get_xticklabels(), fontsize=8)
+    plt.xticks(rotation=25)
+    plt.plot(bsln_dates,bsln_volts_2)
+    plt.show()
+
     # Look at baseline versus temperature
     sensor_time_2 = sensor_time[1:-1]
     bsln_volts_2 = bsln_interp[1:-1]
