@@ -116,40 +116,25 @@ import tmc_parse_data
 import dmm_interp
 def main():
 
-    chan = '0'
-    adc = '9'
+    chan = '5'
+    adc = '11'
     
-    # September 20, 2016 (the 12 hour run)
-    # tmc_file = '../tmc_cal_data/tmeas_2016-09-20_13_15_40_177697.txt'
-    # dmm_file = '../tmc_cal_data/hp34401a_2016-09-20_13_15_05_748130.txt'
+    # October 10, 2016 (the shorted board 3 run (ADC 9, 10, and 11)
+    # tmc_file = '../tmc_cal_data/tmeas_2016-10-07_18_54_15_041531.txt'
     
-    # September 21, 2016 (the 1 week run)
-    tmc_file = '../tmc_cal_data/tmeas_2016-09-21_15_31_42_428268.txt'
-    dmm_file = '../tmc_cal_data/hp34401a_2016-09-21_15_31_33_706609.txt'
-
-    fcoeffs = open('tmc_coeffs_bd_0_1_2_3.txt','a')
+    # Long wire twisted pairs on 9-3, 10-3, 11-3
+    # tmc_file = '../tmc_cal_data/tmeas_2016-10-11_17_20_59_884324.txt'
+    
+    # Long wire twisted pair with mid-line bananas on 9-3. 10-3 and 11-3 are long twisted pair, as before
+    tmc_file = '../tmc_cal_data/tmeas_2016-10-15_11_49_41_941548.txt'
 
     # Do the reference drift correction
     sensor_time,sensor_meas = tmc_parse_data.tmc_parse_data(tmc_file,'TSIG'+chan,'ADC'+adc)
-    # Cut out the sections where the reference was not connected
-    sensor_time_2,sensor_meas_2 = tmc_parse_data.tmc_find_valid_meas(sensor_time,sensor_meas)
-    plt.ylabel("TSIG data with Cuts")
-    plt.plot(sensor_time,sensor_meas)
-    plt.plot(sensor_time_2,sensor_meas_2,color='r',marker='.')
-    plt.show()
-
-    # Get the DMM data
-    dmm_meas_2 = dmm_interp.dmm_interp(dmm_file,sensor_time_2)
-    plt.ylabel("DMM Data (Volts)")
-    plt.plot(sensor_time_2,dmm_meas_2)
-    plt.show()
-
-    tsig_volts = [((x/8388608.)-1.)*0.625 + 0.625 for x in sensor_meas_2]
-    sensor_volts_dmm_corr = lin_corr_ac(dmm_meas_2,tsig_volts)
-
+    tsig_volts = [((x/8388608.)-1.)*0.625 for x in sensor_meas]
+    
     #################################################
     # TSIG
-    tsig_dates = [datetime.datetime.fromtimestamp(ts) for ts in sensor_time_2]
+    tsig_dates = [datetime.datetime.fromtimestamp(ts) for ts in sensor_time]
     
     # CURR
     curr_time,curr_meas = tmc_parse_data.tmc_parse_data(tmc_file,'CURR'+chan,'ADC'+adc)
@@ -173,59 +158,23 @@ def main():
     bsln_volts = [(x/8388608.-1)*0.625*2 for x in bsln_meas]
 
     # Plot up the DMM corrected data
-    plot_all(tsig_dates,sensor_volts_dmm_corr,
+    plot_all(tsig_dates,tsig_volts,
              curr_dates,curr_ma_2,
              atemp_dates,atemp_degc,
              btemp_dates,btemp_degc,
              bsln_dates,bsln_volts) 
-
-    # Plot TSIG vs BSLN
-    bsln_interp = meas_interp.meas_interp(bsln_time,bsln_volts,sensor_time_2)
-    plt.plot(tsig_volts,bsln_interp,'.')
-    plt.show()
-
-    #################################################
-    # Find tempco of TSIG, do it in raw ADC units
-    sensor_adu_dmm_corr = [((x-0.625)/0.625 + 1)*8388608 for x in sensor_volts_dmm_corr]
-    A_tsig_vs_btemp,B_tsig_vs_btemp,sensor_adu_btemp_time,sensor_adu_btemp_corr = tmc_corr(sensor_time_2,sensor_adu_dmm_corr,btemp_time,btemp_degc)
-    print 'TSIG corrected for temperature: Slope = %f, Intercept = %f' %(A_tsig_vs_btemp,B_tsig_vs_btemp)
-    print 'Taking -2.5uV/mK as the sensor temperature coefficient, the temperature error for the TMC alone would be %f mK/degC' % (A_tsig_vs_btemp*0.625/(2.5*8388608.)*1.E6)
-
+    
     ################################################
-    # Find the calibration of TSIG to the DMM
-    plt.plot(sensor_meas_2,dmm_meas_2)
+    # Plot the sum of BSLN and TSIG
+    bsln_interp = meas_interp.meas_interp(bsln_time,bsln_volts,sensor_time)
+    tsig_pure = bsln_interp + tsig_volts # remove baseline
+    plt.plot(sensor_time,tsig_pure,'.')
     plt.show()
 
-    # Find the First Pass correlation
-    # A_dmm_tsig, B_dmm_tsig, tsig_time_dmm_corr, tsig_dmm_corr = tmc_corr(sensor_time_2,dmm_meas_2,sensor_time_2,sensor_meas_2)
-    A_dmm_tsig, B_dmm_tsig,dum1,dum2 = tmc_corr(sensor_time_2,dmm_meas_2,sensor_time_2,sensor_meas_2)
-    print 'First Pass: TSIG calibrated to DMM: Slope = %f microvolts/ADU, Intercept = %f Volts' % (A_dmm_tsig*1.E6,B_dmm_tsig) 
+    print 'ADC %d, CHAN %d: standard deviation is %f uV' % (int(adc),int(chan),np.std(tsig_pure*1.E6))
 
-    # Cut the outliers
-    tsig_flat = lin_corr(sensor_meas_2,dmm_meas_2,A_dmm_tsig,B_dmm_tsig)
-    print 'Here comes the flat'
-    plt.plot(sensor_time_2,tsig_flat)
+    plt.plot(bsln_interp,tsig_volts,'.')
     plt.show()
-    time_out_cut,dum_x1,tsig_out_cut = cut_outliers(sensor_time_2,tsig_flat,sensor_meas_2)
-    time_out_cut,dum_x1,dmm_out_cut = cut_outliers(sensor_time_2,tsig_flat,dmm_meas_2)
-    print 'Here comes the cut values'
-    plt.plot(tsig_out_cut,dmm_out_cut,'.')
-    
-    # Do the correction
-    B3 = 0 # I got a somewhat unexpected slope when I let the intercept be free
-    A3, = curve_fit(lambda x, a : f_line(x,a,B3),tsig_out_cut,dmm_out_cut)[0]
-    dumb_line = []
-    for x in tsig_out_cut:
-        dumb_line.append(x*A3+B3)
-    plt.plot(tsig_out_cut,dumb_line,color='r')
-    plt.show()
-    print "ADC channels to voltage calibration: Slope = %g (Volts/count), Intercept = %g V" %(A3,B3)
-
-    fcoeffs.write(tmc_file)
-    coef_str = '    ADC' + adc + ', TSIG' + chan + ': ' + str(A_tsig_vs_btemp) + ', ' + str(B_tsig_vs_btemp) + '; ' + str(A3) + '\n'
-    fcoeffs.write(coef_str)
-    fcoeffs.close()
-    
 
 if __name__ == "__main__":
     main()
