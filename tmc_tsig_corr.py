@@ -112,6 +112,35 @@ def plot_all(tsig_dates,tsig_volts,
     plt.show()
 
 
+def tmc_gain_corr(sensor_time,tsig_volts,zero_time,zero_volts,bsln_time,bsln_volts):
+    print len(sensor_time)
+    print len(tsig_volts)
+    print len(zero_time)
+    print len(zero_volts)
+    print len(bsln_time)
+    print len(bsln_volts)
+    # Create interpolating function for zero
+    sensor_time_2 = sensor_time[1:-1]
+    zero_volts_2 = meas_interp.meas_interp(zero_time,zero_volts,sensor_time_2)
+    bsln_volts_2 = meas_interp.meas_interp(bsln_time,bsln_volts,sensor_time_2)
+    tsig_volts_2 = tsig_volts[1:-1]
+
+
+    y_tsig = [y-z for y,z in zip(tsig_volts_2,zero_volts_2)]
+    y_bsln = [y-z for y,z in zip(bsln_volts_2,zero_volts_2)]
+    g_corr = [y/0.625 for y in y_bsln]
+    
+    print 'This is the gain correction'
+    plt.plot(sensor_time_2,g_corr)
+    plt.show()
+
+    print 'This is the gain corrected tsig'
+    x_tsig = [y/g for y,g in zip(y_tsig,g_corr)]
+    plt.plot(sensor_time_2,x_tsig)
+    plt.show()
+
+    return sensor_time_2, x_tsig
+
 import tmc_parse_data
 import dmm_interp
 def main():
@@ -148,7 +177,8 @@ def main():
     plt.plot(sensor_time_2,dmm_meas_2)
     plt.show()
 
-    tsig_volts = [((x/8388608.)-1.)*0.625 + 0.625 for x in sensor_meas_2]
+    # tsig_volts = [((x/8388608.)-1.)*0.625 + 0.625 for x in sensor_meas_2]
+    tsig_volts = [((x/8388608.)-1.)*0.625 for x in sensor_meas_2]
     sensor_volts_dmm_corr = lin_corr_ac(dmm_meas_2,tsig_volts)
 
     #################################################
@@ -175,6 +205,11 @@ def main():
     bsln_time,bsln_meas = tmc_parse_data.tmc_parse_data(tmc_file,'BSLN','ADC'+adc)
     bsln_dates = [datetime.datetime.fromtimestamp(ts) for ts in bsln_time]
     bsln_volts = [(x/8388608.-1)*0.625*2 for x in bsln_meas]
+    
+    # ZERO
+    zero_time,zero_meas = tmc_parse_data.tmc_parse_data(tmc_file,'ZERO','ADC'+adc)
+    zero_dates = [datetime.datetime.fromtimestamp(ts) for ts in zero_time]
+    zero_volts = [(x/8388608.-1)*0.625*2 for x in zero_meas]
 
     # Plot up the DMM corrected data
     plot_all(tsig_dates,sensor_volts_dmm_corr,
@@ -183,6 +218,34 @@ def main():
              btemp_dates,btemp_degc,
              bsln_dates,bsln_volts) 
 
+    ################################################
+    # Fri Oct 21 14:40:37 EDT 2016
+    # Try to do a gain correction. Maybe it will help
+    print 'Gain correction'
+    time_gain_corr, tsig_gain_corr = tmc_gain_corr(sensor_time_2,tsig_volts,zero_time,zero_volts,bsln_time,bsln_volts)
+    btemp_interp = meas_interp.meas_interp(btemp_time,btemp_degc,time_gain_corr)
+    plt.plot(btemp_interp,tsig_gain_corr,'.')
+    plt.show()
+    
+    ################################################
+    # Do a dmm correction on the gain corrected data
+    print 'DMM correction'
+    dmm_meas_3 = dmm_interp.dmm_interp(dmm_file,time_gain_corr)
+    sensor_volts_dmm_corr_2 = lin_corr_ac(dmm_meas_3,tsig_gain_corr)
+    sensor_volts_dmm_corr_2_mean = np.mean(sensor_volts_dmm_corr_2)
+    sensor_volts_dmm_corr_2_mean_sub = [x-sensor_volts_dmm_corr_2_mean for x in sensor_volts_dmm_corr_2]
+    sensor_volts_dmm_corr_mean = np.mean(sensor_volts_dmm_corr)
+    sensor_volts_dmm_corr_mean_sub = [x - sensor_volts_dmm_corr_mean for x in sensor_volts_dmm_corr]
+    plt.plot(sensor_time_2,sensor_volts_dmm_corr_mean_sub,color='r')
+    plt.plot(time_gain_corr,sensor_volts_dmm_corr_2_mean_sub)
+    plt.show()
+
+    print 'Correlated to btemp'
+    plt.plot(btemp_interp,sensor_volts_dmm_corr_2,'.')
+    plt.show()
+
+
+    ################################################
     # Plot TSIG vs BSLN
     print "TSIG vs BSLN"
     bsln_interp = meas_interp.meas_interp(bsln_time,bsln_volts,sensor_time_2)
@@ -236,12 +299,6 @@ def main():
     fcoeffs.write(coef_str)
     fcoeffs.close()
 
-    ################################################
-    # Fri Oct 21 14:40:37 EDT 2016
-    # Try to do a gain correction. Maybe it will help
-    
-
-    
 
 if __name__ == "__main__":
     main()
