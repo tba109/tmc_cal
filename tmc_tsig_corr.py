@@ -116,8 +116,8 @@ import tmc_parse_data
 import dmm_interp
 def main():
 
-    chan = '0'
-    adc = '9'
+    chan = '5'
+    adc = '2'
     
     # September 20, 2016 (the 12 hour run)
     # tmc_file = '../tmc_cal_data/tmeas_2016-09-20_13_15_40_177697.txt'
@@ -126,6 +126,10 @@ def main():
     # September 21, 2016 (the 1 week run)
     tmc_file = '../tmc_cal_data/tmeas_2016-09-21_15_31_42_428268.txt'
     dmm_file = '../tmc_cal_data/hp34401a_2016-09-21_15_31_33_706609.txt'
+
+    # October 18, 2016 (the bad HPF board)
+    # tmc_file = '../tmc_cal_data/tmeas_2016-10-18_13_24_16_642445.txt'
+    # dmm_file = '../tmc_cal_data/hp34401a_2016-10-18_13_24_09_926237.txt'
 
     fcoeffs = open('tmc_coeffs_bd_0_1_2_3.txt','a')
 
@@ -180,8 +184,14 @@ def main():
              bsln_dates,bsln_volts) 
 
     # Plot TSIG vs BSLN
+    print "TSIG vs BSLN"
     bsln_interp = meas_interp.meas_interp(bsln_time,bsln_volts,sensor_time_2)
     plt.plot(tsig_volts,bsln_interp,'.')
+    plt.show()
+
+    # Plot the difference between TSIG and baseline
+    tsig_sub_bsln = [x-y for x,y in zip(tsig_volts,bsln_interp)]
+    plt.plot(sensor_time_2,tsig_sub_bsln,'.')
     plt.show()
 
     #################################################
@@ -225,6 +235,12 @@ def main():
     coef_str = '    ADC' + adc + ', TSIG' + chan + ': ' + str(A_tsig_vs_btemp) + ', ' + str(B_tsig_vs_btemp) + '; ' + str(A3) + '\n'
     fcoeffs.write(coef_str)
     fcoeffs.close()
+
+    ################################################
+    # Fri Oct 21 14:40:37 EDT 2016
+    # Try to do a gain correction. Maybe it will help
+    
+
     
 
 if __name__ == "__main__":

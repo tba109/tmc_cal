@@ -169,70 +169,35 @@ def main():
              btemp_dates,btemp_degc,
              bsln_dates,bsln_volts) 
     
-    ################################################
-    # Plot the sum of BSLN and TSIG
-    bsln_interp = meas_interp.meas_interp(bsln_time,bsln_volts,sensor_time)
-    tsig_pure = bsln_interp + tsig_volts # remove baseline
-    plt.plot(sensor_time,tsig_pure,'.')
-    plt.show()
-
-    print 'ADC %d, CHAN %d: standard deviation is %f uV' % (int(adc),int(chan),np.std(tsig_pure*1.E6))
-
-    plt.plot(bsln_interp,tsig_volts,'.')
-    plt.show()
-
-    # Do it in rough temperature units
-    ax1 = plt.subplot(111)
-    tsig_pure_mk = [x*1.E6/-2.5 for x in tsig_pure]
-    tsig_pure_mk_mean = np.mean(tsig_pure_mk)
-    tsig_pure_mk_2 = [x-tsig_pure_mk_mean for x in tsig_pure_mk]
-    plt.ylabel('TSIG Excess (mK)')
-    plt.setp(ax1.get_xticklabels(), fontsize=8)
-    plt.xticks(rotation=25)
-    plt.plot(tsig_dates,tsig_pure_mk_2)
-    plt.show()
 
     ################################################
-    # Look at baseline versus time
-    ax1 = plt.subplot(111)
-    bsln_mean = np.mean(bsln_volts)
-    bsln_volts_2 = [x-bsln_mean for x in bsln_volts]
-    plt.ylabel('BSLN Excess (Volts)')
-    plt.setp(ax1.get_xticklabels(), fontsize=8)
-    plt.xticks(rotation=25)
-    plt.plot(bsln_dates,bsln_volts_2)
-    plt.show()
+    # Fri Oct 21 14:40:37 EDT 2016
+    # Try to do a gain correction. Maybe it will help
+    print 'Try gain correction'
 
-    # Look at baseline versus boardtemperature
+    # gain_corr = [y/0.625 for y in bsln_volts]
+    # x_tsig = [(y_tsig - 0.625)/g for y_tsig,g in zip(tsig_volts,gain_corr)]
+    # plt.plot(sensor_time,x_tsig)
+    # plt.show()
+
+    # Create interpolating function for zero
     sensor_time_2 = sensor_time[1:-1]
-    bsln_volts_2 = bsln_interp[1:-1]
-    btemp_interp = meas_interp.meas_interp(btemp_time,btemp_degc,sensor_time_2)
-    plt.plot(btemp_interp,bsln_volts_2,'.')
-    A,B = curve_fit(f_line,btemp_interp,bsln_volts_2)[0]
-    print "BSLN correlation to board temperature: %f uV/degC, %f uV" % (A*1.E6,B*1.E6)
-    plt.show()
+    zero_volts_2 = meas_interp.meas_interp(zero_time,zero_volts,sensor_time_2)
+    bsln_volts_2 = meas_interp.meas_interp(bsln_time,bsln_volts,sensor_time_2)
+    tsig_volts_2 = tsig_volts[1:-1]
 
+    y_tsig = [y-z for y,z in zip(tsig_volts_2,zero_volts_2)]
+    y_bsln = [y-z for y,z in zip(bsln_volts_2,zero_volts_2)]
+    g_corr = [y/0.625 for y in y_bsln]
     
-    # Look at baseline versus adc temperature
-    sensor_time_2 = sensor_time[1:-1]
-    bsln_volts_2 = bsln_interp[1:-1]
-    atemp_interp = meas_interp.meas_interp(atemp_time,atemp_degc,sensor_time_2)
-    plt.plot(atemp_interp,bsln_volts_2,'.')
-    A,B = curve_fit(f_line,atemp_interp,bsln_volts_2)[0]
-    print "BSLN correlation to ADC temperature: %f uV/degC, %f uV" % (A*1.E6,B*1.E6)
+    print 'This is the gain correction'
+    plt.plot(sensor_time_2,g_corr)
     plt.show()
 
-
-    # Look at the zero point
-    ax1 = plt.subplot(111)
-    zero_mean = np.mean(zero_volts)
-    zero_volts_2 = [x-zero_mean for x in zero_volts]
-    plt.ylabel('ZERO Excess (Volts)')
-    plt.setp(ax1.get_xticklabels(), fontsize=8)
-    plt.xticks(rotation=25)
-    plt.plot(zero_dates,zero_volts_2)
+    print 'This is the gain corrected tsig'
+    x_tsig = [y/g for y,g in zip(y_tsig,g_corr)]
+    plt.plot(sensor_time_2,x_tsig)
     plt.show()
-
 
 if __name__ == "__main__":
     main()
