@@ -146,7 +146,7 @@ import dmm_interp
 def main():
 
     chan = '5'
-    adc = '2'
+    adc = '11'
     
     # September 20, 2016 (the 12 hour run)
     # tmc_file = '../tmc_cal_data/tmeas_2016-09-20_13_15_40_177697.txt'
@@ -161,6 +161,11 @@ def main():
     # dmm_file = '../tmc_cal_data/hp34401a_2016-10-18_13_24_09_926237.txt'
 
     fcoeffs = open('tmc_coeffs_bd_0_1_2_3.txt','a')
+
+    # This is for writing the gain corrected signals to files
+    f_tsig_gain_corr_name = 'f_tsig_gain_corr_ADC' + str(adc) + '_CHAN' + str(chan) + '.txt'
+    f_tsig_gain_corr = open(f_tsig_gain_corr_name,'w')
+
 
     # Do the reference drift correction
     sensor_time,sensor_meas = tmc_parse_data.tmc_parse_data(tmc_file,'TSIG'+chan,'ADC'+adc)
@@ -239,6 +244,12 @@ def main():
     plt.plot(sensor_time_2,sensor_volts_dmm_corr_mean_sub,color='r')
     plt.plot(time_gain_corr,sensor_volts_dmm_corr_2_mean_sub)
     plt.show()
+
+    for t,x in zip(time_gain_corr,sensor_volts_dmm_corr_2_mean_sub):
+        line = str(t) + ' ' + str(x) + '\n'
+        f_tsig_gain_corr.write(line)
+
+    f_tsig_gain_corr.close()
 
     print 'Correlated to btemp'
     plt.plot(btemp_interp,sensor_volts_dmm_corr_2,'.')

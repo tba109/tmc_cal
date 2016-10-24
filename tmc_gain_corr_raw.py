@@ -130,8 +130,9 @@ def main():
 
     # Do the reference drift correction
     sensor_time,sensor_meas = tmc_parse_data.tmc_parse_data(tmc_file,'TSIG'+chan,'ADC'+adc)
-    tsig_volts = [((x/8388608.)-1.)*0.625 for x in sensor_meas]
-    
+    # tsig_volts = [((x/8388608.)-1.)*0.625 for x in sensor_meas]
+    tsig_volts = [s for s in sensor_meas]
+
     #################################################
     # TSIG
     tsig_dates = [datetime.datetime.fromtimestamp(ts) for ts in sensor_time]
@@ -155,12 +156,14 @@ def main():
     # BSLN
     bsln_time,bsln_meas = tmc_parse_data.tmc_parse_data(tmc_file,'BSLN','ADC'+adc)
     bsln_dates = [datetime.datetime.fromtimestamp(ts) for ts in bsln_time]
-    bsln_volts = [(x/8388608.-1)*0.625*2 for x in bsln_meas]
+    # bsln_volts = [(x/8388608.-1)*0.625*2 for x in bsln_meas]
+    bsln_volts = bsln_meas
 
     # ZERO
     zero_time,zero_meas = tmc_parse_data.tmc_parse_data(tmc_file,'ZERO','ADC'+adc)
     zero_dates = [datetime.datetime.fromtimestamp(ts) for ts in zero_time]
-    zero_volts = [(x/8388608.-1)*0.625*2 for x in zero_meas]
+    # zero_volts = [(x/8388608.-1)*0.625*2 for x in zero_meas]
+    zero_volts = zero_meas
 
     # Plot up the DMM corrected data
     plot_all(tsig_dates,tsig_volts,
@@ -185,13 +188,17 @@ def main():
     zero_volts_2 = meas_interp.meas_interp(zero_time,zero_volts,sensor_time_2)
     bsln_volts_2 = meas_interp.meas_interp(bsln_time,bsln_volts,sensor_time_2)
     tsig_volts_2 = tsig_volts[1:-1]
-
+    
     y_tsig = [y-z for y,z in zip(tsig_volts_2,zero_volts_2)]
     y_bsln = [y-z for y,z in zip(bsln_volts_2,zero_volts_2)]
-    g_corr = [y/0.625 for y in y_bsln]
+    y_bsln_mean = np.mean(y_bsln)
+    g_corr = [y/y_bsln_mean for y in y_bsln]
     # Try the "double" gain correction
     # g_corr = [g*g for g in g_corr]
-    
+    # g_corr = [2*g for g in g_corr]
+    # g_corr = [1+2*(g-1) for g in g_corr]
+
+
     print 'This is the gain correction'
     plt.plot(sensor_time_2,g_corr)
     plt.show()
