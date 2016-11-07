@@ -9,20 +9,36 @@ from scipy.optimize import curve_fit
 # color_list = ['b','g','r','c','m','y','k','w']
 color_list = ['black','brown','red','orange','yellow','green','darkgreen','cyan','blue','violet','magenta','gray']
 
+# file_list = [
+#     'f_tsig_gain_corr_ADC0_CHAN5.txt',
+#     'f_tsig_gain_corr_ADC1_CHAN5.txt',
+#     'f_tsig_gain_corr_ADC2_CHAN5.txt',
+#     'f_tsig_gain_corr_ADC3_CHAN5.txt',
+#     'f_tsig_gain_corr_ADC4_CHAN5.txt',
+#     'f_tsig_gain_corr_ADC5_CHAN5.txt',
+#     'f_tsig_gain_corr_ADC6_CHAN5.txt',
+#     'f_tsig_gain_corr_ADC7_CHAN5.txt',
+#     'f_tsig_gain_corr_ADC8_CHAN5.txt',
+#     'f_tsig_gain_corr_ADC9_CHAN5.txt',
+#     'f_tsig_gain_corr_ADC10_CHAN5.txt',
+#     'f_tsig_gain_corr_ADC11_CHAN5.txt',
+#     ]
+
 file_list = [
-    'f_tsig_gain_corr_ADC0_CHAN5.txt',
-    'f_tsig_gain_corr_ADC1_CHAN5.txt',
-    'f_tsig_gain_corr_ADC2_CHAN5.txt',
-    'f_tsig_gain_corr_ADC3_CHAN5.txt',
-    'f_tsig_gain_corr_ADC4_CHAN5.txt',
-    'f_tsig_gain_corr_ADC5_CHAN5.txt',
-    'f_tsig_gain_corr_ADC6_CHAN5.txt',
-    'f_tsig_gain_corr_ADC7_CHAN5.txt',
-    'f_tsig_gain_corr_ADC8_CHAN5.txt',
-    'f_tsig_gain_corr_ADC9_CHAN5.txt',
-    'f_tsig_gain_corr_ADC10_CHAN5.txt',
-    'f_tsig_gain_corr_ADC11_CHAN5.txt',
+    'f_tsig_gain_corr_ADC0_CHAN0.txt',
+    'f_tsig_gain_corr_ADC1_CHAN0.txt',
+    'f_tsig_gain_corr_ADC2_CHAN0.txt',
+    'f_tsig_gain_corr_ADC3_CHAN0.txt',
+    'f_tsig_gain_corr_ADC4_CHAN0.txt',
+    'f_tsig_gain_corr_ADC5_CHAN0.txt',
+    'f_tsig_gain_corr_ADC6_CHAN0.txt',
+    'f_tsig_gain_corr_ADC7_CHAN0.txt',
+    'f_tsig_gain_corr_ADC8_CHAN0.txt',
+    'f_tsig_gain_corr_ADC9_CHAN0.txt',
+    'f_tsig_gain_corr_ADC10_CHAN0.txt',
+    'f_tsig_gain_corr_ADC11_CHAN0.txt',
     ]
+
 
 t = []
 x = []
@@ -43,10 +59,31 @@ for tel, xel in zip(t,x):
     for ti,xi in zip(tel,xel):
         print ti,xi
 
+# Convert timestamps to datetime
+dates=[]
+n=0
+for tel in t:
+    dates.append([])
+    for ti in tel:
+        dates[n].append(datetime.datetime.fromtimestamp(ti))
+    n+=1
+
+# Check it
+for dtel in dates:
+    for di in dtel:
+        print di
+
+print len(dates)
+print len(x)
+
 # Plot everything
+ax1 = plt.subplot(111)
+plt.setp(ax1.get_xticklabels(), fontsize=8)
+plt.xticks(rotation=25)
+
 icolor = 0
-for tel, xel in zip(t,x):
-    plt.plot(tel,xel,color=color_list[icolor])
+for dtel, xel in zip(dates,x):
+    plt.plot(dtel,xel,color=color_list[icolor])
     icolor=(icolor+1)%len(color_list)
 plt.show()
 

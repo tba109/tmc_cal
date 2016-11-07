@@ -7,6 +7,24 @@ import sys
 from scipy.optimize import curve_fit
 import meas_interp
 
+# Take the moving average
+def moving_average(interval, window_size):
+    window = np.ones(int(window_size))/float(window_size)
+    result = np.convolve(interval, window, 'same')
+    # print 'Result is length = %d' % len(result)
+    for i in range(len(result)):
+        if i < window_size:
+            #print "%d: replacing %f with %f" % (i,result[i],np.sum(interval[:i+1])/float(i+1))
+            result[i] = np.sum(interval[:i+1])/float(i+1)
+        elif i > (len(result)-window_size-1):
+            #print "%d: replacing %f with %f" % (i,result[i],np.sum(interval[i:])/float(len(result)-i))
+            result[i] = np.sum(interval[i:])/float(len(result)-i)
+            
+    
+    # print result[0],result[len(result)-1]
+    return result
+
+
 def f_line(x,A,B):
     return A*x+B
 
@@ -145,7 +163,7 @@ import tmc_parse_data
 import dmm_interp
 def main():
 
-    chan = '5'
+    chan = '0'
     adc = '11'
     
     # September 20, 2016 (the 12 hour run)
@@ -153,12 +171,25 @@ def main():
     # dmm_file = '../tmc_cal_data/hp34401a_2016-09-20_13_15_05_748130.txt'
     
     # September 21, 2016 (the 1 week run)
-    tmc_file = '../tmc_cal_data/tmeas_2016-09-21_15_31_42_428268.txt'
-    dmm_file = '../tmc_cal_data/hp34401a_2016-09-21_15_31_33_706609.txt'
+    # tmc_file = '../tmc_cal_data/tmeas_2016-09-21_15_31_42_428268.txt'
+    # dmm_file = '../tmc_cal_data/hp34401a_2016-09-21_15_31_33_706609.txt'
 
     # October 18, 2016 (the bad HPF board)
     # tmc_file = '../tmc_cal_data/tmeas_2016-10-18_13_24_16_642445.txt'
     # dmm_file = '../tmc_cal_data/hp34401a_2016-10-18_13_24_09_926237.txt'
+
+    # October 24, 2016 (using an external +12V Agilent linear regulating supply)
+    # tmc_file = '../tmc_cal_data/tmeas_2016-10-24_14_56_14_908250.txt'
+    # dmm_file = '../tmc_cal_data/hp34401a_2016-10-24_14_31_31_869278.txt'
+
+    # October 28. 2016 (switch to LM399A)
+    # tmc_file = '../tmc_cal_data/tmeas_2016-10-28_18_30_08_343466.txt'
+    # dmm_file = '../tmc_cal_data/hp34401a_2016-10-28_18_28_35_305888.txt'
+
+    # November 4, 2016 (switch to LM399A)
+    tmc_file = '../tmc_cal_data/tmeas_2016-10-31_17_57_26_163981.txt'
+    dmm_file = '../tmc_cal_data/hp34401a_2016-10-31_17_57_18_843663.txt'
+
 
     fcoeffs = open('tmc_coeffs_bd_0_1_2_3.txt','a')
 
@@ -185,6 +216,24 @@ def main():
     # tsig_volts = [((x/8388608.)-1.)*0.625 + 0.625 for x in sensor_meas_2]
     tsig_volts = [((x/8388608.)-1.)*0.625 for x in sensor_meas_2]
     sensor_volts_dmm_corr = lin_corr_ac(dmm_meas_2,tsig_volts)
+
+    # Quick hack for quick-look plots Mon Oct 31 08:45:54 EDT 2016
+    
+    tsig_hack_meas = [((x/8388608.)-1.)*0.625 + 0.625 for x in sensor_meas_2]
+    tsig_hack_mean = np.mean(tsig_hack_meas)
+    tsig_hack_meas = [x-tsig_hack_mean for x in tsig_hack_meas]
+    dmm_meas_2_mean = np.mean(dmm_meas_2)
+    dmm_meas_2_hack = [x-dmm_meas_2_mean for x in dmm_meas_2]
+    plt.plot(sensor_time_2,tsig_hack_meas,'.',color='red')
+    plt.plot(sensor_time_2,dmm_meas_2_hack,'.',color='blue')
+    plt.show()
+
+    # Another quick hack to show that the DMM agrees with the signal
+    diff = [x-y for x,y in zip(tsig_hack_meas,dmm_meas_2_hack)]
+    plt.plot(sensor_time_2,diff,'.',color='blue')
+    mvavg = moving_average(diff,40)
+    plt.plot(sensor_time_2,mvavg,color='red')
+    plt.show()
 
     #################################################
     # TSIG
@@ -222,6 +271,14 @@ def main():
              atemp_dates,atemp_degc,
              btemp_dates,btemp_degc,
              bsln_dates,bsln_volts) 
+
+    # Another hack
+    plot_all(tsig_dates,mvavg,
+             curr_dates,curr_ma_2,
+             atemp_dates,atemp_degc,
+             btemp_dates,btemp_degc,
+             bsln_dates,bsln_volts) 
+
 
     ################################################
     # Fri Oct 21 14:40:37 EDT 2016
