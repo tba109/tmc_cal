@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 import matplotlib.pyplot as plt
 import matplotlib.dates as md
 import numpy as np
@@ -6,6 +8,15 @@ import datetime
 import sys
 from scipy.optimize import curve_fit
 import meas_interp
+
+# Subtract the mean
+def mean_sub(x):
+    return (x-np.mean(x))
+
+
+# Subtract the mean and normalize it
+def mean_sub_norm(x):
+    return ((x-np.mean(x))/np.max(x-np.mean(x)))
 
 # Take the moving average
 def moving_average(interval, window_size):
@@ -162,48 +173,97 @@ def tmc_gain_corr(sensor_time,tsig_volts,zero_time,zero_volts,bsln_time,bsln_vol
 import tmc_parse_data
 import dmm_interp
 def main():
-
-    chan = '0'
-    adc = '11'
     
-    # September 20, 2016 (the 12 hour run)
-    # tmc_file = '../tmc_cal_data/tmeas_2016-09-20_13_15_40_177697.txt'
-    # dmm_file = '../tmc_cal_data/hp34401a_2016-09-20_13_15_05_748130.txt'
-    
-    # September 21, 2016 (the 1 week run)
-    # tmc_file = '../tmc_cal_data/tmeas_2016-09-21_15_31_42_428268.txt'
-    # dmm_file = '../tmc_cal_data/hp34401a_2016-09-21_15_31_33_706609.txt'
-
-    # October 18, 2016 (the bad HPF board)
-    # tmc_file = '../tmc_cal_data/tmeas_2016-10-18_13_24_16_642445.txt'
-    # dmm_file = '../tmc_cal_data/hp34401a_2016-10-18_13_24_09_926237.txt'
-
-    # October 24, 2016 (using an external +12V Agilent linear regulating supply)
-    # tmc_file = '../tmc_cal_data/tmeas_2016-10-24_14_56_14_908250.txt'
-    # dmm_file = '../tmc_cal_data/hp34401a_2016-10-24_14_31_31_869278.txt'
-
-    # October 28. 2016 (switch to LM399A)
-    # tmc_file = '../tmc_cal_data/tmeas_2016-10-28_18_30_08_343466.txt'
-    # dmm_file = '../tmc_cal_data/hp34401a_2016-10-28_18_28_35_305888.txt'
-
-    # November 4, 2016 (switch to LM399A)
-    # tmc_file = '../tmc_cal_data/tmeas_2016-10-31_17_57_26_163981.txt'
-    # dmm_file = '../tmc_cal_data/hp34401a_2016-10-31_17_57_18_843663.txt'
-
     # November 11, 2016 (LM399A, only ADC0 CH0 and CH1, remove distribution boards)
-    tmc_file = '../tmc_cal_data/tmeas_2016-11-07_16_04_15_769425.txt'
-    dmm_file = '../tmc_cal_data/hp34401a_2016-11-07_16_03_50_197514.txt'
+    tmc_file = '../../tmc_cal_data/tmeas_2016-11-07_16_04_15_769425.txt'
+    dmm_file = '../../tmc_cal_data/hp34401a_2016-11-07_16_03_50_197514.txt'
+
+    ########################################################################################################
+    # Plot all of the data
+
+    # Look at the 0.7V data
+    chan = '0'
+    adc = '0'
+    print 'Plotting raw 0.7V sensor data'
+    sensor_time_700m,sensor_meas_700m = tmc_parse_data.tmc_parse_data(tmc_file,'TSIG'+chan,'ADC'+adc)
+    sensor_mvavg_700m = moving_average(sensor_meas_700m,40)
+    plt.ylabel("TSIG ~ 0.7V")
+    plt.plot(sensor_time_700m,sensor_meas_700m,color='blue')
+    plt.plot(sensor_time_700m,sensor_mvavg_700m,color='red')
+    plt.show()
+    
+    # Look at the 0.18V data
+    chan = '1'
+    adc = '0'
+    print 'Plotting raw 0.18V sensor data'
+    sensor_time_180m,sensor_meas_180m = tmc_parse_data.tmc_parse_data(tmc_file,'TSIG'+chan,'ADC'+adc)
+    sensor_mvavg_180m = moving_average(sensor_meas_180m,40)
+    plt.ylabel("TSIG ~ 0.18V")
+    plt.plot(sensor_time_180m,sensor_meas_180m,color='blue')
+    plt.plot(sensor_time_180m,sensor_mvavg_180m,color='red')
+    plt.show()
+
+    # Look at the 7V TMC data
+    dmm_meas = dmm_interp.dmm_interp(dmm_file,sensor_time_700m)
+    dmm_meas_mvavg = moving_average(dmm_meas,40)
+    plt.ylabel("DMM Data (Volts)")
+    plt.plot(sensor_time_700m,dmm_meas_mvavg)
+    plt.show()
+
+    ########################################################################################################
+    # 700m is derived from a voltage divider on 7V, and 180m is derived on a voltage
+    # divider from that. So, in theory, if we scale by the amplitude, they should all be
+    # equal. Let's see if that's true!
+
+    # Scale 7
+    scaled_7_meas = mean_sub_norm(dmm_meas_mvavg)
+    scaled_7_time = sensor_time_700m
+    
+    # Scale 700m
+    scaled_700m_meas = mean_sub_norm(sensor_mvavg_700m)
+    scaled_700m_time = sensor_time_700m
+
+    # Scale 180m
+    scaled_180m_meas = mean_sub_norm(sensor_mvavg_180m)
+    scaled_180m_time = sensor_time_180m
+
+    # Plot them so we can see how well they scale with each other
+    print 'Plotting mean subtracted, normalized 7v, 0.7v, 0.18v'
+    # plt.plot(scaled_7_time,scaled_7_meas,color='blue')
+    plt.plot(scaled_700m_time,scaled_700m_meas,color='red')
+    plt.plot(scaled_180m_time,scaled_180m_meas,color='green')
+    plt.show()
+
+    ####################################################################################
+    # Let's try not scaling them, but just mean subtracting
+    mean_sub_700m_meas = mean_sub(sensor_mvavg_700m)
+    mean_sub_180m_meas = mean_sub(sensor_mvavg_180m)
+
+    print 'Plotting mean subtracted 0.7v, 0.18v'
+    plt.plot(sensor_time_700m,mean_sub_700m_meas,color='red')
+    plt.plot(sensor_time_180m,mean_sub_180m_meas,color='green')
+    plt.show()
 
 
-    fcoeffs = open('tmc_coeffs_bd_0_1_2_3.txt','a')
+    ####################################################################################
+    # At first glance, it looks like there is something goofy about the 180m measurement:
+    # It is noisier and has a fairly different shape. However, it is also a much different
+    # value than 700m. To explore further, let's look at the baseline against them, and
+    # how it varies
+    bsln_time,bsln_meas = tmc_parse_data.tmc_parse_data(tmc_file,'BSLN','ADC'+adc)
+    bsln_mvavg = moving_average(bsln_meas,40)
+    mean_sub_bsln = mean_sub(bsln_mvavg)
 
-    # This is for writing the gain corrected signals to files
-    f_tsig_gain_corr_name = 'f_tsig_gain_corr_ADC' + str(adc) + '_CHAN' + str(chan) + '.txt'
-    f_tsig_gain_corr = open(f_tsig_gain_corr_name,'w')
+    mean_sub_180m_meas = (2388500./9490250.)*mean_sub_180m_meas
 
+    print 'Plotting mean subtracted 0.7v, 0.18v, and baseline'
+    plt.plot(bsln_time,mean_sub_bsln,color='blue')
+    plt.plot(sensor_time_700m,mean_sub_700m_meas,color='red')
+    plt.plot(sensor_time_180m,mean_sub_180m_meas,color='green')
+    plt.show()
 
-    # Do the reference drift correction
-    sensor_time,sensor_meas = tmc_parse_data.tmc_parse_data(tmc_file,'TSIG'+chan,'ADC'+adc)
+    sys.exit()
+
     # Cut out the sections where the reference was not connected
     sensor_time_2,sensor_meas_2 = tmc_parse_data.tmc_find_valid_meas(sensor_time,sensor_meas)
     plt.ylabel("TSIG data with Cuts")
