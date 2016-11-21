@@ -40,6 +40,23 @@ file_list = [
     ]
 
 
+ # Take the moving average
+def moving_average(interval, window_size):
+    window = np.ones(int(window_size))/float(window_size)
+    result = np.convolve(interval, window, 'same')
+    # print 'Result is length = %d' % len(result)
+    for i in range(len(result)):
+        if i < window_size:
+            #print "%d: replacing %f with %f" % (i,result[i],np.sum(interval[:i+1])/float(i+1))
+            result[i] = np.sum(interval[:i+1])/float(i+1)
+        elif i > (len(result)-window_size-1):
+            #print "%d: replacing %f with %f" % (i,result[i],np.sum(interval[i:])/float(len(result)-i))
+            result[i] = np.sum(interval[i:])/float(len(result)-i)
+            
+    
+    # print result[0],result[len(result)-1]
+    return result
+
 t = []
 x = []
 n = 0
@@ -76,6 +93,10 @@ for dtel in dates:
 print len(dates)
 print len(x)
 
+# Take the moving average
+for i in range(len(x)):
+    x[i] = 1.E6*moving_average(x[i],20)
+
 # Plot everything
 ax1 = plt.subplot(111)
 plt.setp(ax1.get_xticklabels(), fontsize=8)
@@ -84,6 +105,7 @@ plt.xticks(rotation=25)
 icolor = 0
 for dtel, xel in zip(dates,x):
     plt.plot(dtel,xel,color=color_list[icolor])
+    plt.ylabel('TSIG Measurement ($\mu$V)')
     icolor=(icolor+1)%len(color_list)
 plt.show()
 
