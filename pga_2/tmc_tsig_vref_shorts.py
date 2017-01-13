@@ -91,11 +91,18 @@ def main():
     # dmm_file = '../../tmc_cal_data/hp34401a_2016-11-27_12_40_28_420476.txt'
 
     # December 9, 2016 (LM399A, only ADC0 CH0 and CH1, remove distribution boards, PGA=2 for all), 700m
-    # This datasheet has a mistake: the dmm was connected to 700m but the tmeas board was connected to 
+    # This dataset has a mistake: the dmm was connected to 700m but the tmeas board was connected to 
     # 180m.
-    tmc_file = '../../tmc_cal_data/tmeas_2016-12-07_08_07_50_274941.txt'
-    dmm_file = '../../tmc_cal_data/hp34401a_2016-12-07_08_07_38_587933.txt'
+    # tmc_file = '../../tmc_cal_data/tmeas_2016-12-07_08_07_50_274941.txt'
+    # dmm_file = '../../tmc_cal_data/hp34401a_2016-12-07_08_07_38_587933.txt'
 
+    # December 12, 2016 (LM399A, only ADC0 CH0 and CH1, remove distribution boards, PGA=2 for all), 700m
+    # tmc_file = '../../tmc_cal_data/tmeas_2016-12-10_16_49_39_779812.txt'
+    # dmm_file = '../../tmc_cal_data/hp34401a_2016-12-10_16_49_35_184315.txt'
+
+    # December 18, 2016 (LM399A, PGA=2 for all), CH0 is 700m, CH1 is 180m
+    tmc_file = '../../tmc_cal_data/tmeas_2016-12-15_17_34_42_217098.txt'
+    dmm_file = '../../tmc_cal_data/hp34401a_2016-12-15_17_34_32_758791.txt'
 
     ########################################################################################################
     # Plot all of the data
@@ -228,6 +235,7 @@ def main():
     # Let's try a slightly different approach: plot v700m_2 versus atemp_1
     print 'Step 3c: Try correlation between v700m_2 and atemp_1?'
     popt, pcov = curve_fit(f_line,atemp_1,v700m_2)
+
     print 'a = %f uV/degC, b = %f uV' % (popt[0]*1.E6,popt[1]*1.E6)
     plt.plot(atemp_1,v700m_2)
     plt.plot(atemp_1,f_line(atemp_1,popt[0],popt[1]))

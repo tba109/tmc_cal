@@ -85,19 +85,9 @@ import tmc_parse_data
 import dmm_interp
 def main():
     
-    # November 17, 2016 (LM399A, only ADC0 CH0 and CH1, remove distribution boards, PGA=1 for all), 700m
-    tmc_file = '../../tmc_cal_data/tmeas_2016-11-21_11_12_58_957044.txt'
-    dmm_file = '../../tmc_cal_data/hp34401a_2016-11-21_11_11_25_861691.txt'
-
-    # November 27, 2016, 180m, something seems to have been wrong with this data
-    # tmc_file = '../../tmc_cal_data/tmeas_2016-11-23_13_40_13_383970.txt'
-    # dmm_file = '../../tmc_cal_data/hp34401a_2016-11-23_13_40_04_105991.txt'
-
-    # December 19, 2016, 180m
-    # tmc_file = '../../tmc_cal_data/tmeas_2016-12-19_08_39_28_645189.txt'
-    # dmm_file = '../../tmc_cal_data/hp34401a_2016-12-19_08_39_18_771786.txt'
-
-    
+    # December 18, 2016 (LM399A, PGA=2 for all), CH0 is 700m, CH1 is 180m
+    tmc_file = '../../tmc_cal_data/tmeas_2016-12-15_17_34_42_217098.txt'
+    dmm_file = '../../tmc_cal_data/hp34401a_2016-12-15_17_34_32_758791.txt'
 
     ########################################################################################################
     # Plot all of the data
@@ -107,7 +97,7 @@ def main():
     adc = '0'
     sensor_time_700m,sensor_meas_700m = tmc_parse_data.tmc_parse_data(tmc_file,'TSIG'+chan,'ADC'+adc)
     sensor_mvavg_700m = moving_average(sensor_meas_700m,40)
-    v_700m = [(x/8388608. - 1)*2.5 for x in sensor_mvavg_700m]
+    v_700m = [(x/8388608. - 1)*1.25 for x in sensor_mvavg_700m]
     # plt.ylabel("TSIG (Volts)")
     # plt.plot(sensor_time_700m,v_700m,color='blue')
     # plt.show()
@@ -117,7 +107,7 @@ def main():
     adc = '0'
     sensor_time_bs,sensor_meas_bs = tmc_parse_data.tmc_parse_data(tmc_file,'TSIG'+chan,'ADC'+adc)
     sensor_mvavg_bs = moving_average(sensor_meas_bs,40)
-    v_bs = [(x/8388608. - 1)*2.5 for x in sensor_mvavg_bs]
+    v_bs = [(x/8388608. - 1)*1.25 for x in sensor_mvavg_bs]
     # plt.ylabel("TSIG (Volts)")
     # plt.plot(sensor_time_180m,v_180m,color='blue')
     # plt.show()
@@ -127,7 +117,7 @@ def main():
     adc = '0'
     sensor_time_ls,sensor_meas_ls = tmc_parse_data.tmc_parse_data(tmc_file,'TSIG'+chan,'ADC'+adc)
     sensor_mvavg_ls = moving_average(sensor_meas_ls,40)
-    v_ls = [(x/8388608. - 1)*2.5 for x in sensor_mvavg_ls]
+    v_ls = [(x/8388608. - 1)*1.25  for x in sensor_mvavg_ls]
     # plt.ylabel("TSIG (Volts)")
     # plt.plot(sensor_time_180m,v_180m,color='blue')
     # plt.show()
@@ -137,7 +127,7 @@ def main():
     adc = '0'
     sensor_time_ss,sensor_meas_ss = tmc_parse_data.tmc_parse_data(tmc_file,'TSIG'+chan,'ADC'+adc)
     sensor_mvavg_ss = moving_average(sensor_meas_ss,40)
-    v_ss = [(x/8388608. - 1)*2.5 for x in sensor_mvavg_ss]
+    v_ss = [(x/8388608. - 1)*1.25 for x in sensor_mvavg_ss]
     # plt.ylabel("TSIG (Volts)")
     # plt.plot(sensor_time_180m,v_180m,color='blue')
     # plt.show()
@@ -152,7 +142,7 @@ def main():
     # Baseline
     bsln_time,bsln_meas = tmc_parse_data.tmc_parse_data(tmc_file,'BSLN','ADC'+adc)
     bsln_mvavg = moving_average(bsln_meas,40)
-    v_bsln = [(x/8388608. - 1)*2.5 for x in bsln_mvavg]
+    v_bsln = [(x/8388608. - 1)*1.25 for x in bsln_mvavg]
     # plt.ylabel("Baseline (Volts)")
     # plt.plot(bsln_time,v_bsln)
     # plt.show()
@@ -160,7 +150,7 @@ def main():
     # Zero 
     zero_time,zero_meas = tmc_parse_data.tmc_parse_data(tmc_file,'ZERO','ADC'+adc)
     zero_mvavg = moving_average(zero_meas,40)
-    v_zero = [(x/8388608. - 1)*2.5 for x in zero_meas]
+    v_zero = [(x/8388608. - 1)*1.25 for x in zero_meas]
     # plt.ylabel("Zero (Volts)")
     # plt.plot(zero_time,v_zero)
     # plt.show()
@@ -182,7 +172,8 @@ def main():
     # plt.show()
 
     # Create a time variable and work from here
-    time_ts = sensor_time_700m[10:-10] # This peels off some problematic boundaries
+    # time_ts = [x for x in sensor_time_700m if (x > 1.48145E9 and x <1.48151E9)]
+    time_ts = sensor_time_700m[10:-10]
     time_dt = [datetime.datetime.fromtimestamp(ts) for ts in time_ts]
 
     #######################################################################################################
@@ -200,7 +191,7 @@ def main():
     #######################################################################################################
     # Step 1: Start with the follow raw signals
     v700m_1 = f_700m(time_ts)
-    vbs_1 = f_bs(time_ts)
+    v180m_1 = f_bs(time_ts)
     vls_1 = f_ls(time_ts)
     vss_1 = f_ss(time_ts)
     vbsln_1 = f_bsln(time_ts)
@@ -210,24 +201,24 @@ def main():
     ctemp_1 = btemp_1 # This gets used beyond, so pick atemp or btemp and run with it
     vdmm_1 = f_dmm(time_ts)
     print 'Step 1: raw signals'
-    plot_all(time_dt,v700m_1,vbs_1,vls_1,vss_1,ctemp_1)
+    plot_all(time_dt,v700m_1,v180m_1,vls_1,vss_1,ctemp_1)
 
     ########################################################################################################
     # Step 2: Subtract off the zero point
-    v700m_2 = [x-z for x,z in zip(v700m_1,vbs_1)]
-    vbs_2 = [x-z for x,z in zip(vbs_1,vbs_1)]
-    vls_2 = [x-z for x,z in zip(vls_1,vbs_1)]
-    vss_2 = [x-z for x,z in zip(vss_1,vbs_1)]
+    v700m_2 = [x-z for x,z in zip(v700m_1,vss_1)]
+    v180m_2 = [x-z for x,z in zip(v180m_1,vss_1)]
+    vls_2 = [x-z for x,z in zip(vls_1,vss_1)]
+    vss_2 = [x-z for x,z in zip(vss_1,vss_1)]
     ctemp_2 = ctemp_1
     print 'Step 2: zero point subtraction'
-    plot_all(time_dt,v700m_2,vbs_2,vls_2,vss_2,ctemp_2)
+    plot_all(time_dt,v700m_2,v180m_2,vls_2,vss_2,ctemp_2)
     
     #######################################################################################################
-    # Let's try a slightly different approach: plot v700m_2 versus atemp_1
-    print 'Step 3c: Try correlation between v700m_2 and btemp_1?'
-    popt, pcov = curve_fit(f_line,btemp_1,v700m_2)
+    # Let's try a slightly different approach: plot v700m_2 versus btemp_1
+    print 'Step 3: Try correlation between v180m_2 and btemp_1?'
+    popt, pcov = curve_fit(f_line,btemp_1,v180m_2)
     print 'a = %f uV/degC, b = %f uV' % (popt[0]*1.E6,popt[1]*1.E6)
-    plt.plot(btemp_1,v700m_2)
+    plt.plot(btemp_1,v180m_2)
     plt.plot(btemp_1,f_line(btemp_1,popt[0],popt[1]))
     plt.show()
 
@@ -235,79 +226,20 @@ def main():
     a=popt[0]
     b=popt[1]
 
-    ########################################################################################################
-    # Step 4: DMM correlation for the atemp correlated data
-    print 'Step 4: DMM correlation with the atemp correlated data'
-    v700m_3c = [y-a*x-b for x,y in zip(atemp_1,v700m_2)]
-    v700m_3c = moving_average(v700m_3c,40)
-    vtsig_4 = mean_sub(v700m_3c)-mean_sub(vdmm_1)
-    plt.plot(time_ts,mean_sub(v700m_3c),color='red')
-    plt.plot(time_ts,mean_sub(vdmm_1),color='green')
-    plt.plot(time_ts,vtsig_4,color='violet')
-    plt.show()
-
     #######################################################################################################
-    # Step 5: The final, short corrected, atemp corrected, DMM corrected data
-    print 'Step 5: The final, short corrected, atemp corrected, DMM corrected data'
-    ax1 = plt.subplot(111)
-    plt.ylabel('v700m (V)')
-    plt.setp(ax1.get_xticklabels(), fontsize=8)
-    plt.xticks(rotation=25)
-    plt.plot(time_dt,mean_sub(v700m_3c)-mean_sub(vdmm_1),color='blue')
-    plt.show()
-    
-    print 'And excluding the first 3 hours, where it looks like things were still warming up, converting to mK'
-    ax1 = plt.subplot(111)
-    plt.ylabel('v700m (uV)')
-    plt.setp(ax1.get_xticklabels(), fontsize=8)
-    plt.xticks(rotation=25)
-    plt.plot(time_dt[1800:],vtsig_4[1800:]*1.E6,color='blue')
-    plt.show()
-
-    print 'VRMS = %f uV, TRMS = %f mK' % (np.std(vtsig_4[1800:])*1.E6,np.std(vtsig_4[1800:])*1.E6/2.5)    
-
-    ####################################################################################################
-    # 
-    print 'What if we try a gain-based baseline correction instead. This has typically been worse, but'
-    print 'I have normally only looked at it before doing the baseline channel subtraction.'
-    mean_vbsln = np.mean(vbsln_1)
-    gcorr = vbsln_1/mean_vbsln
-    v700m_3b = [x/g for x,g in zip(v700m_2,gcorr)]
-    plt.plot(time_ts,v700m_3b)
-    plt.show()
-
-    print 'The final, short corrected, atemp corrected, DMM corrected data'
-    ax1 = plt.subplot(111)
-    plt.ylabel('v700m (V)')
-    plt.setp(ax1.get_xticklabels(), fontsize=8)
-    plt.xticks(rotation=25)
-    plt.plot(time_dt,mean_sub(v700m_3b)-mean_sub(vdmm_1),color='blue')
-    plt.show()
-
-
-    ###################################################################################################
-    # 
-    print 'What if we do an honest-to-goodness baseline subtraction?'
-    plt.plot(time_ts,mean_sub(v700m_2)-mean_sub(vbsln_1))
-    plt.show()
-
-    ###################################################################################################
-    # 
-    print 'Step 6: The 180mV data is especially drifty at the source. It is a good idea to do a subtraction before looking at tempcos'
-    plt.plot(time_ts,mean_sub(v700m_2),color='blue')
-    plt.plot(time_ts,mean_sub(vdmm_1),color='red')
-    plt.show()
-
-    v180_6 = mean_sub(v700m_2)-mean_sub(vdmm_1)
-    plt.plot(time_ts,mean_sub(v180_6))
-    plt.show()
-
-    print 'Step 6b: Try correlation between v180_6 and btemp_1?'
-    popt, pcov = curve_fit(f_line,btemp_1,v180_6)
+    # Let's try a slightly different approach: plot v700m_2 versus btemp_1
+    print 'Step 4: Subtract off the dmm measured drift and find tempco again'
+    v180m_3 = v180m_2 - vdmm_1
+    popt, pcov = curve_fit(f_line,btemp_1,v180m_3)
     print 'a = %f uV/degC, b = %f uV' % (popt[0]*1.E6,popt[1]*1.E6)
-    plt.plot(btemp_1,v180_6)
+    plt.plot(btemp_1,v180m_3)
     plt.plot(btemp_1,f_line(btemp_1,popt[0],popt[1]))
     plt.show()
+
+    # Tired of typing these
+    a=popt[0]
+    b=popt[1]
+
 
 
 if __name__ == "__main__":
