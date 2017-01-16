@@ -229,7 +229,7 @@ def main():
     #######################################################################################################
     # Let's try a slightly different approach: plot v700m_2 versus btemp_1
     print 'Step 4: Subtract off the dmm measured drift and find tempco again'
-    v700m_3 = v700m_2 - vdmm_1
+    v700m_3 = [x-y for x,y in zip(v700m_2,vdmm_1)]
     popt, pcov = curve_fit(f_line,btemp_1,v700m_3)
     print 'a = %f uV/degC, b = %f uV' % (popt[0]*1.E6,popt[1]*1.E6)
     plt.plot(btemp_1,v700m_3)

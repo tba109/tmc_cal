@@ -225,13 +225,13 @@ def main():
     a=popt[0]
     b=popt[1]
 
-
     #######################################################################################################
     # Let's try a slightly different approach: plot v700m_2 versus atemp_1
+    v180m_3 = [x-y for x,y in zip(v180m_2,vdmm_1)]
     print 'Step 4: Try correlation between v700m_2 and btemp_1?'
-    popt, pcov = curve_fit(f_line,btemp_1,v700m_2)
+    popt, pcov = curve_fit(f_line,btemp_1,v180m_3)
     print 'a = %f uV/degC, b = %f uV' % (popt[0]*1.E6,popt[1]*1.E6)
-    plt.plot(btemp_1,v700m_2)
+    plt.plot(btemp_1,v180m_3)
     plt.plot(btemp_1,f_line(btemp_1,popt[0],popt[1]))
     plt.show()
 
