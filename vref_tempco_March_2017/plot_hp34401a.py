@@ -4,7 +4,7 @@ import time
 import datetime
 
 # f = open('hp34401a_2016-09-20_13_15_05_748130.txt','r')
-f = open('../tmc_cal_data/hp34401a_2017-02-09_17_55_21_921079.txt','r')
+f = open('../../tmc_cal_data/hp34401a_2017-03-07_08_35_53_600208.txt','r')
 time_meas = []
 v_meas = []
 for line in f:
