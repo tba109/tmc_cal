@@ -116,8 +116,8 @@ import tmc_parse_data
 import dmm_interp
 def main():
 
-    chan = '3'
-    adc = '11'
+    chan = '1'
+    adc = '0'
     
     # October 10, 2016 (the shorted board 3 run (ADC 9, 10, and 11)
     # tmc_file = '../tmc_cal_data/tmeas_2016-10-07_18_54_15_041531.txt'
@@ -126,7 +126,9 @@ def main():
     # tmc_file = '../tmc_cal_data/tmeas_2016-10-11_17_20_59_884324.txt'
     
     # Long wire twisted pair with mid-line bananas on 9-3. 10-3 and 11-3 are long twisted pair, as before
-    tmc_file = '../tmc_cal_data/tmeas_2016-10-15_11_49_41_941548.txt'
+    # tmc_file = '../tmc_cal_data/tmeas_2016-10-15_11_49_41_941548.txt'
+    
+    tmc_file = '../tmc_cal_data/tmeas_2017-03-13_17_48_12_523434.txt'
 
     # Do the reference drift correction
     sensor_time,sensor_meas = tmc_parse_data.tmc_parse_data(tmc_file,'TSIG'+chan,'ADC'+adc)
@@ -174,11 +176,13 @@ def main():
     bsln_interp = meas_interp.meas_interp(bsln_time,bsln_volts,sensor_time)
     tsig_pure = bsln_interp + tsig_volts # remove baseline
     plt.plot(sensor_time,tsig_pure,'.')
+    print "TSIG pure: sensor_meas + bsln_meas"
     plt.show()
 
-    print 'ADC %d, CHAN %d: standard deviation is %f uV' % (int(adc),int(chan),np.std(tsig_pure*1.E6))
+    print 'TSIG puser ADC %d, CHAN %d: standard deviation is %f uV' % (int(adc),int(chan),np.std(tsig_pure*1.E6))
 
     plt.plot(bsln_interp,tsig_volts,'.')
+    print "TSIG versus BSLN"
     plt.show()
 
     # Do it in rough temperature units
@@ -190,6 +194,7 @@ def main():
     plt.setp(ax1.get_xticklabels(), fontsize=8)
     plt.xticks(rotation=25)
     plt.plot(tsig_dates,tsig_pure_mk_2)
+    print "TSIG pure in mK"
     plt.show()
 
     ################################################
@@ -201,6 +206,7 @@ def main():
     plt.setp(ax1.get_xticklabels(), fontsize=8)
     plt.xticks(rotation=25)
     plt.plot(bsln_dates,bsln_volts_2)
+    print "BSLN Excess"
     plt.show()
 
     # Look at baseline versus boardtemperature
@@ -231,6 +237,7 @@ def main():
     plt.setp(ax1.get_xticklabels(), fontsize=8)
     plt.xticks(rotation=25)
     plt.plot(zero_dates,zero_volts_2)
+    print "ZERO Excess (Volts)"
     plt.show()
 
 

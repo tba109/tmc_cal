@@ -89,7 +89,6 @@ def main():
     tmc_file = '../../tmc_cal_data/tmeas_2016-12-10_16_49_39_779812.txt'
     dmm_file = '../../tmc_cal_data/hp34401a_2016-12-10_16_49_35_184315.txt'
 
-
     ########################################################################################################
     # Plot all of the data
 
@@ -201,35 +200,36 @@ def main():
     ctemp_1 = btemp_1 # This gets used beyond, so pick atemp or btemp and run with it
     vdmm_1 = f_dmm(time_ts)
     print 'Step 1: raw signals'
-    plot_all(time_dt,v700m_1,vbs_1,vls_1,vss_1,ctemp_1)
+    # plot_all(time_dt,v700m_1,vbs_1,vls_1,vss_1,ctemp_1)
+    # Wed Mar 15 11:39:45 EDT 2017
+    # Let's look at baseline instead
+    plot_all(time_dt,v700m_1,vbs_1,vbsln_1,vss_1,ctemp_1)
 
     ########################################################################################################
     # Step 2: Subtract off the zero point
     v700m_2 = [x-z for x,z in zip(v700m_1,vbs_1)]
     vbs_2 = [x-z for x,z in zip(vbs_1,vbs_1)]
-    vls_2 = [x-z for x,z in zip(vls_1,vbs_1)]
+    vbsln_2 = [x-z for x,z in zip(vls_1,vbsln_1)]
     vss_2 = [x-z for x,z in zip(vss_1,vbs_1)]
     ctemp_2 = ctemp_1
     print 'Step 2: zero point subtraction'
-    plot_all(time_dt,v700m_2,vbs_2,vls_2,vss_2,ctemp_2)
+    plot_all(time_dt,v700m_2,vbs_2,vbsln_2,vss_2,ctemp_2)
+
+    #######################################################################################################
+    # Wed Mar 15 11:43:25 EDT 2017
+    # I might expect bsln to do a "decent" job as a gain correction here. Let's try it. 
+    # Step 3: 
+    bsln_mean = np.mean(vbsln_2)
+    gcorr = [x/bsln_mean for x in vbsln_2]
+    vbsln_3 = [x/y for x,y in zip(vbsln_2,gcorr)]
+    v700m_3 = [x/y for x,y in zip(v700m_2,gcorr)]
+    print 'Step 3: Try using baseline as a correction'
+    plot_all(time_dt,v700m_3,vbs_2,vbsln_3,vss_2,ctemp_2)
+
     
     #######################################################################################################
     # Let's try a slightly different approach: plot v700m_2 versus btemp_1
-    print 'Step 3: Try correlation between v700m_2 and btemp_1?'
-    popt, pcov = curve_fit(f_line,btemp_1,v700m_2)
-    print 'a = %f uV/degC, b = %f uV' % (popt[0]*1.E6,popt[1]*1.E6)
-    plt.plot(btemp_1,v700m_2)
-    plt.plot(btemp_1,f_line(btemp_1,popt[0],popt[1]))
-    plt.show()
-
-    # Tired of typing these
-    a=popt[0]
-    b=popt[1]
-
-    #######################################################################################################
-    # Let's try a slightly different approach: plot v700m_2 versus btemp_1
-    print 'Step 4: Subtract off the dmm measured drift and find tempco again'
-    v700m_3 = [x-y for x,y in zip(v700m_2,vdmm_1)]
+    print 'Step 3b: Try correlation between v700m_3 and btemp_1?'
     popt, pcov = curve_fit(f_line,btemp_1,v700m_3)
     print 'a = %f uV/degC, b = %f uV' % (popt[0]*1.E6,popt[1]*1.E6)
     plt.plot(btemp_1,v700m_3)
@@ -240,7 +240,23 @@ def main():
     a=popt[0]
     b=popt[1]
 
-_
+    #######################################################################################################
+    # Let's try a slightly different approach: plot v700m_2 versus btemp_1
+    print 'Step 4: Subtract off the dmm measured drift and find tempco again'
+    v700m_4 = [x-y for x,y in zip(v700m_3,vdmm_1)]
+    popt, pcov = curve_fit(f_line,btemp_1,v700m_4)
+    print 'a = %f uV/degC, b = %f uV' % (popt[0]*1.E6,popt[1]*1.E6)
+    plt.plot(btemp_1,v700m_4)
+    plt.plot(btemp_1,f_line(btemp_1,popt[0],popt[1]))
+    plt.show()
+
+    # Tired of typing these
+    a=popt[0]
+    b=popt[1]
+
+    print 'The final corrections'
+    plot_all(time_dt,v700m_4,vbs_2,vbsln_3,vss_2,ctemp_2)
+
 
 if __name__ == "__main__":
     main()
