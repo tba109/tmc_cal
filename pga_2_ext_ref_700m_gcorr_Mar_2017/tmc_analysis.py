@@ -258,5 +258,16 @@ def main():
     plot_all(time_dt,v700m_4,vbs_2,vbsln_3,vss_2,ctemp_2)
 
 
+    #######################################################################################################
+    # Let's plot the result in mK
+    v700m_4_mean = np.mean(v700m_4)
+    v700m_te = [(x - v700m_4_mean)/(-2.5E-6) for x in v700m_4] # _te stands for temperature excess
+    v700m_hr = np.linspace(0,len(v700m_te)-1,len(v700m_te))*6./3600
+    plt.xlabel("Time (hr)")
+    plt.ylabel("Temperature Equivalent Measurement Excess (mK)")
+    plt.plot(v700m_hr,v700m_te)
+    plt.show()
+
+
 if __name__ == "__main__":
     main()
