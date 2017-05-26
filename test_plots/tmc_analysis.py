@@ -40,28 +40,28 @@ def moving_average(interval, window_size):
 def f_line(x,A,B):
     return A*x+B
 
-def plot_all(time_dt,v700m,vbs,vls,vss,ctemp):
+def plot_all(time_dt,tsig,curr,vbsln,vzero,ctemp):
     # Make a pretty plot
     ax1 = plt.subplot(515)
-    plt.ylabel('v700m (V)')
+    plt.ylabel('tsig (V)')
     plt.setp(ax1.get_xticklabels(), fontsize=8)
     plt.xticks(rotation=25)
-    plt.plot(time_dt,v700m)
+    plt.plot(time_dt,tsig)
     
     ax2 = plt.subplot(514, sharex=ax1)
-    plt.ylabel('vbs (V)')
+    plt.ylabel('curr (uA)')
     plt.setp(ax2.get_xticklabels(), visible=False)
-    plt.plot(time_dt,vbs)
+    plt.plot(time_dt,curr)
     
     ax3 = plt.subplot(513, sharex=ax1)
-    plt.ylabel('vls (V)')
+    plt.ylabel('bsln (V)')
     plt.setp(ax3.get_xticklabels(), visible=False)
-    plt.plot(time_dt,vls)
+    plt.plot(time_dt,vbsln)
     
     ax4 = plt.subplot(512, sharex=ax1)
-    plt.ylabel('vss (V)')
+    plt.ylabel('zero (V)')
     plt.setp(ax4.get_xticklabels(), visible=False)
-    plt.plot(time_dt,vss)
+    plt.plot(time_dt,vzero)
     
     ax5 = plt.subplot(511, sharex=ax1)
     plt.ylabel('btemp (V)')
@@ -87,7 +87,6 @@ def main():
     
     # December 18, 2016 (LM399A, PGA=2 for all), CH0 is 700m, CH1 is 180m
     tmc_file = '../../tmc_cal_data/tmeas_2016-12-15_17_34_42_217098.txt'
-    dmm_file = '../../tmc_cal_data/hp34401a_2016-12-15_17_34_32_758791.txt'
 
     ########################################################################################################
     # Plot all of the data
@@ -95,49 +94,21 @@ def main():
     # Look at the 0.7V data
     chan = '0'
     adc = '0'
-    sensor_time_700m,sensor_meas_700m = tmc_parse_data.tmc_parse_data(tmc_file,'TSIG'+chan,'ADC'+adc)
-    sensor_mvavg_700m = moving_average(sensor_meas_700m,40)
-    v_700m = [(x/8388608. - 1)*1.25 for x in sensor_mvavg_700m]
+    sensor_time_tsig,sensor_meas_tsig = tmc_parse_data.tmc_parse_data(tmc_file,'TSIG'+chan,'ADC'+adc)
+    sensor_mvavg_tsig = moving_average(sensor_meas_tsig,40)
+    v_tsig = [(x/8388608. - 1)*1.25 for x in sensor_mvavg_tsig]
     # plt.ylabel("TSIG (Volts)")
-    # plt.plot(sensor_time_700m,v_700m,color='blue')
+    # plt.plot(sensor_time_tsig,v_tsig,color='blue')
     # plt.show()
     
-    # Look at the banana short data
-    chan = '1'
-    adc = '0'
-    sensor_time_bs,sensor_meas_bs = tmc_parse_data.tmc_parse_data(tmc_file,'TSIG'+chan,'ADC'+adc)
-    sensor_mvavg_bs = moving_average(sensor_meas_bs,40)
-    v_bs = [(x/8388608. - 1)*1.25 for x in sensor_mvavg_bs]
+    # Look at the current
+    sensor_time_curr,sensor_meas_curr = tmc_parse_data.tmc_parse_data(tmc_file,'CURR'+chan,'ADC'+adc)
+    sensor_mvavg_curr = moving_average(sensor_meas_curr,40)
+    v_curr = [(x/8388608. - 1)*1.25 for x in sensor_mvavg_curr]
+    i_curr = [v*100 for v in v_curr]
     # plt.ylabel("TSIG (Volts)")
     # plt.plot(sensor_time_180m,v_180m,color='blue')
     # plt.show()
-
-    # Look at the long short data
-    chan = '2'
-    adc = '0'
-    sensor_time_ls,sensor_meas_ls = tmc_parse_data.tmc_parse_data(tmc_file,'TSIG'+chan,'ADC'+adc)
-    sensor_mvavg_ls = moving_average(sensor_meas_ls,40)
-    v_ls = [(x/8388608. - 1)*1.25  for x in sensor_mvavg_ls]
-    # plt.ylabel("TSIG (Volts)")
-    # plt.plot(sensor_time_180m,v_180m,color='blue')
-    # plt.show()
-
-    # Look at the short short data
-    chan = '3'
-    adc = '0'
-    sensor_time_ss,sensor_meas_ss = tmc_parse_data.tmc_parse_data(tmc_file,'TSIG'+chan,'ADC'+adc)
-    sensor_mvavg_ss = moving_average(sensor_meas_ss,40)
-    v_ss = [(x/8388608. - 1)*1.25 for x in sensor_mvavg_ss]
-    # plt.ylabel("TSIG (Volts)")
-    # plt.plot(sensor_time_180m,v_180m,color='blue')
-    # plt.show()
-
-    # Look at the DMM
-    dmm_meas = dmm_interp.dmm_interp(dmm_file,sensor_time_700m)
-    dmm_meas_mvavg = moving_average(dmm_meas,400)
-    plt.ylabel("DMM Data (Volts)")
-    plt.plot(sensor_time_700m,dmm_meas_mvavg)
-    plt.show()
 
     # Baseline
     bsln_time,bsln_meas = tmc_parse_data.tmc_parse_data(tmc_file,'BSLN','ADC'+adc)
@@ -172,36 +143,30 @@ def main():
     # plt.show()
 
     # Create a time variable and work from here
-    # time_ts = [x for x in sensor_time_700m if (x > 1.48145E9 and x <1.48151E9)]
-    time_ts = sensor_time_700m[10:-10]
+    # time_ts = [x for x in sensor_time_tsig if (x > 1.48145E9 and x <1.48151E9)]
+    time_ts = sensor_time_tsig[10:-10]
     time_dt = [datetime.datetime.fromtimestamp(ts) for ts in time_ts]
 
     #######################################################################################################
     # Make some interpolating functions
-    f_700m = interpolate.interp1d(sensor_time_700m,v_700m)
-    f_bs = interpolate.interp1d(sensor_time_bs,v_bs)
-    f_ls = interpolate.interp1d(sensor_time_ls,v_ls)
-    f_ss = interpolate.interp1d(sensor_time_ss,v_ss)
+    f_tsig = interpolate.interp1d(sensor_time_tsig,v_tsig)
+    f_curr = interpolate.interp1d(sensor_time_curr,i_curr)
     f_bsln = interpolate.interp1d(bsln_time,v_bsln)
     f_zero = interpolate.interp1d(zero_time,v_zero)
     f_btemp = interpolate.interp1d(btemp_time,btemp_degc)
     f_atemp = interpolate.interp1d(atemp_time,atemp_degc)
-    f_dmm = interpolate.interp1d(sensor_time_700m,dmm_meas_mvavg)
 
     #######################################################################################################
     # Step 1: Start with the follow raw signals
-    v700m_1 = f_700m(time_ts)
-    v180m_1 = f_bs(time_ts)
-    vls_1 = f_ls(time_ts)
-    vss_1 = f_ss(time_ts)
+    vtsig_1 = f_tsig(time_ts)
+    curr_1 = f_curr(time_ts)
     vbsln_1 = f_bsln(time_ts)
     vzero_1 = f_zero(time_ts)
     atemp_1 = f_atemp(time_ts)
     btemp_1 = f_btemp(time_ts)
     ctemp_1 = btemp_1 # This gets used beyond, so pick atemp or btemp and run with it
-    vdmm_1 = f_dmm(time_ts)
     print 'Step 1: raw signals'
-    plot_all(time_dt,v700m_1,v180m_1,vls_1,vss_1,ctemp_1)
+    plot_all(time_dt,vtsig_1,curr_1,vbsln_1,vzero_1,ctemp_1)
 
 if __name__ == "__main__":
     main()
