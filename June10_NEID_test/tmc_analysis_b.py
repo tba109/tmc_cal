@@ -59,12 +59,12 @@ def plot_all(time_dt,tsig,curr,vbsln,vzero,ctemp):
     plt.plot(time_dt,vbsln)
     
     ax4 = plt.subplot(512, sharex=ax1)
-    plt.ylabel('zero (V)')
+    plt.ylabel('calref (V)')
     plt.setp(ax4.get_xticklabels(), visible=False)
     plt.plot(time_dt,vzero)
     
     ax5 = plt.subplot(511, sharex=ax1)
-    plt.ylabel('btemp (V)')
+    plt.ylabel('bvcr (V)')
     plt.setp(ax5.get_xticklabels(), visible=False)
     plt.plot(time_dt,ctemp)
 
@@ -94,7 +94,7 @@ def main():
     # Plot all of the data
 
     # Look at the 2n2222 data
-    chan = '3'
+    chan = '0'
     adc = '0'
     sensor_time_tsig,sensor_meas_tsig = tmc_parse_data_instr.tmc_parse_data(tmc_file,'TSIG'+chan,'ADC'+adc)
     sensor_mvavg_tsig = moving_average(sensor_meas_tsig,40)
@@ -198,7 +198,7 @@ def main():
     # curr_2 = (curr_1)*bsln_mean/vbsln_1
     # vcalref_2 = (vcalref_1)*bsln_mean/vbsln_1
     print 'Step 2: baseline normalization of tsig, curr, v'
-    plot_all(time_dt,vtsig_2,curr_2,vbsln_1,vcalref_2,ctemp_1)
+    plot_all(time_dt,vtsig_2,curr_2,vbsln_1,vcalref_2,vbvcr_1)
     
     # mean_vtsig_2 = np.mean(vtsig_2)
     # mean_vcalref_2 = np.mean(vcalref_2)
@@ -218,11 +218,11 @@ def main():
     # Step 3: 
     vcalref_mean = np.mean(vcalref_2)
     vtsig_3 = vtsig_2*vcalref_mean/vcalref_2
-    curr_3 = curr_2*vcalref_mean/vcalref_2
+    # curr_3 = curr_2*vcalref_mean/vcalref_2
     curr_3 = curr_2*vcalref_mean/vcalref_2*2273/1.E6
     # ctemp_3 = moving_average(ctemp_1,10000)
     print 'Step 3: tsig and curr calibration reference normalization'
-    plot_all(time_dt,vtsig_3,curr_3,vbsln_1,vcalref_2,ctemp_1)
+    plot_all(time_dt,vtsig_3,curr_3,vbsln_1,vcalref_2,vbvcr_1)
 
 
     print 'Plottig in mK'
@@ -236,21 +236,27 @@ def main():
     
     plt.plot(time_dt,mean_sub_norm(vtsig_3))
     plt.plot(time_dt,mean_sub_norm(curr_3))
-    # plt.plot(time_dt,mean_sub_norm(btemp_1))
+    plt.plot(time_dt,mean_sub_norm(btemp_1))
     plt.show()
 
     plt.plot(time_dt,mean_sub_norm(vtsig_3)-mean_sub_norm(btemp_1))
     plt.show()
 
-    #######################################################################################################
-    # Step 4: 
+    # #######################################################################################################
+    # # Step 4: 
     vtsig_4 = vtsig_3 - curr_3
     print 'Step 4: tsig current correction'
-    plot_all(time_dt,vtsig_4,curr_3,vbsln_1,vcalref_2,ctemp_1)
-    
-    # plt.plot(time_dt, vtsig_3-np.mean(vtsig_3))
-    # plt.plot(time_dt, vtsig_4-np.mean(vtsig_4))
-    # plt.show()
+    plot_all(time_dt,vtsig_4,curr_3,vbsln_1,vcalref_2,vbvcr_1)
 
+    print 'Plottig in mK'
+    vtsig_4_mK = vtsig_4*1.E6/-2.5
+    vtsig_4_mK_mean = np.mean(vtsig_4_mK)
+    vtsig_4_mK = vtsig_4_mK - vtsig_4_mK_mean
+    print 'RMS = %f mK' % np.std(vtsig_4_mK)
+    plt.plot(time_dt,vtsig_4_mK)
+    # plt.ylim(-1,1)
+    plt.show()
+
+    
 if __name__ == "__main__":
     main()

@@ -85,8 +85,8 @@ import tmc_parse_data_instr
 import dmm_interp
 def main():
     
-    # tmc_file = '../../raw/combo_pt100_ctrl_June2_2017/combo.txt'
-    tmc_file = '../../raw/combo_pt100_ctrl_June2_2017/combo_2.txt'
+    tmc_file = '../../raw/combo_pt100_ctrl_June2_2017/combo.txt'
+    # tmc_file = '../../raw/combo_pt100_ctrl_June2_2017/combo_2.txt'
     # tmc_file = '../../raw/RawOutput_2017-06-02.txt'
 
     ########################################################################################################
